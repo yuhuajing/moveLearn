@@ -126,3 +126,40 @@ script {
     }
 }
 ```
+
+回收/销毁 结构体 ```let <STRUCT DEF> = <STRUCT>```,将已定义的结构体转为空。
+
+```text
+module Country {
+
+    // ...
+
+    // we'll return values of this struct outside
+    public fun destroy(country: Country): (u8, u64) {
+
+        // variables must match struct fields
+        // all struct fields must be specified
+        let Country { id, population } = country;
+
+        // after destruction country is dropped
+        // but its fields are now variables and
+        // can be used
+        (id, population)
+    }
+}
+```
+MOVE中禁止定义不会被使用的变量，如果需要在不适用字段的情况下销毁结构体，就需要使用缺省```_```表示未使用的结构体字段。
+```text
+module Country {
+    // ...
+
+    public fun destroy(country: Country) {
+
+        // this way you destroy struct and don't create unused variables
+        let Country { id: _, population: _ } = country;
+
+        // or take only id and don't init `population` variable
+        // let Country { id, population: _ } = country;
+    }
+}
+```
