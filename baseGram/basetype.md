@@ -1,8 +1,10 @@
 # 基础语法
 
-Move的基本数据类型支持：整型(u8 u64 u128)、bool类型 和 地址
+Move的基本数据类型支持：整型(u8 u64 u128)、bool类型 和 地址,以及导入已发布的模块（调用执行内部定义的函数和结构体）
 
-变量的基础定义：
+导入模块：使用```use```关键字导入模块名称```use <Address>::<ModuleName>;```,通过 ```::```访问导入模块内的函数或结构体
+
+```const```关键字定义常量，常量定义后就无法修改，具体可以定义为基本类型（整型 bool 地址）或数组，通过变量名称访问变量。
 
 通过```//``` ```/*  */```进行单/多行注释
 
@@ -213,3 +215,61 @@ script {
     }
 }
 ```
+
+模块类似合约中的```library```, 以```module```关键字开头，后面跟随模块名称和大括号，大括号内部定义该模块封装的一组函数和结构体。默认情况下，模块将在发布者的地址下进行编译和发布，需要执行特定的address地址：
+```text
+address 0x1{
+    module HelloWorld{
+        public fun gimme_five():u8{
+            5
+        }
+    }
+}
+```
+在script脚本中导入模块```use```
+```text
+// scripts/run_hello.move
+script {
+    use 0x1::HelloWorld;
+    use 0x1::Debug;
+
+    fun main() {
+        let five = HelloWorld::gimme_five();
+
+        Debug::print<u8>(&five);
+    }
+}
+```
+模块中也可以导入另外的模块，在当前模块的代码块中执行 ```use```,同样可以通过 ```as```关键字重命名导入的模块 ```use <Address>::<ModuleName> as <Alias>;```
+```text
+module Math {
+    use 0x1::Vector;
+
+    // the same way as in scripts
+    // you are free to import any number of modules
+
+    public fun empty_vec(): vector<u64> {
+        Vector::empty<u64>();
+    }
+}
+```
+
+模块/脚本中定义常量表示一些不变量,不过常量在模块/脚本中是本地可见的，不能在外部使用。
+
+```text
+module M {
+
+    const MAX : u64 = 100;
+
+    // however you can pass constant outside using a function
+    public fun get_max(): u64 {
+        MAX
+    }
+
+    // or using
+    public fun is_max(num: u64): bool {
+        num == MAX
+    }
+}
+```
+
