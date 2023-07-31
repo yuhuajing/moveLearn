@@ -273,4 +273,46 @@ module M {
 }
 ```
 
-脚本块中的函数
+脚本块中只能包含一个函数，该函数作为交易被执行，通过```use```关键字调用其余模块的函数，允许函数中传参(参数必须有类型,并且通过,相隔，返回数据的类型在函数括号后用：相隔定义).脚本中能使用的函数功能十分有限，在模块中才能定义一组函数和结构体，封装多项函数功能。
+```text
+address 0x1{
+module Math {
+    fun zero(): u8 {
+        0
+    }
+    fun one(): u8 {
+        1
+    }
+    fun sum(a:u64, b:u64): u64 {
+        a + b
+    }
+    ...
+}
+}
+```
+
+函数修饰符：public/private/native
+
+通过函数修饰符定义函数的可见性，默认在模块中定义的函数都是private，无法再其他模块或脚本中访问。私有函数只能在当前定义的模块中使用。通过```public```关键字修改函数的可见性。表明该函数外部可调用。
+```text
+module Math {
+
+    public fun is_zero(a: u8): bool {
+        a == zero()
+    }
+
+    fun zero(): u8 {
+        0
+    }
+}
+```
+
+```native```函数修饰符用于表明提供额外的自定义功能，这种方法有VM本身定义，在不同的VM中存在不同的实现。这意味着native函数没有使用MOVE语法，没有函数体（类似于半成品的abstract）.
+```text
+module Signer {
+
+    native public fun borrow_address(s: &signer): &address;
+
+    // ... some other functions ...
+}
+```
