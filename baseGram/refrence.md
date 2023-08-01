@@ -161,3 +161,44 @@ Borrow::change_b(mut_b, 100000);
     │
 ```
 其中第二行表示A的地址已经被B引用，第三行再次将A的地址作为读写变量传递，则会因为已经存在变量的依赖而报错。矛盾点在于A的地址被引用，同时A的值又可以被修改，那么引用A的变量会存在不知道指向何处的问题？
+
+## *
+```*```关键字表示将数据从特定的内存地址取出来，实际时执行```copy``` 操作，因此需要保证参数具有copy的权限。通过拷贝操作不会造成变量作用域的转移，只是在当前作用域内生成一个副本。
+```text
+module M {
+    struct T has copy {}
+
+    // value t here is of reference type
+    public fun deref(t: &T): T {
+        *t
+    }
+}
+```
+同时为保证内部变量作用域的稳定，通过```*&```联动可以取出相应的变量值
+```text
+module M {
+    struct H has copy {}
+    struct T { inner: H }
+
+    // ...
+
+    // we can do it even from immutable reference!
+    public fun copy_inner(t: &T): H {
+        *&t.inner
+    }
+}
+```
+
+## 传递基本类型
+基本类型（整型 bool Address）的大小很小，因此在作为参数传递时会默认采用```copy```关键字生成数据副本，并且将数据副本作为变量传递，本地仍然保留变量。当然也可以使用```move```关键字强制不生成副本传递。
+```text
+script {
+    use {{sender}}::M;
+
+    fun main() {
+        let a = 10;
+        M::do_smth(a);  // M::do_smth(copy a); //default
+        let _ = a;
+    }
+}
+```
