@@ -1,5 +1,4 @@
 # 引用
-
 move中每个变量都只有一个作用域，在当前作用域结束时，变量将被删除。其中，变量通过```let```在作用域中定义或者通过参数传递，但是在参数传递过程中，由于变量只拥有一个作用域，所以参数传递伴随着所有权的转移。旧函数将不拥有该变量的所有权，新函数成为新的所有者，接管变量的所有权。
 ```text
 script {
@@ -13,7 +12,8 @@ script {
         // and is being put into new scope of `M::value` function
         M::value(a);
 
-        // variable a no longer exists in this scope
+        // a在第二步中已经被传递到模块的函数中，所有权被转移，a变量一斤不存在于当前的作用域中。
+        // 当参数被传递到另一个函数时，内部参数会隐式使用move关键字 M::value(a)= M::value(move a);
         // this code won't compile
         M::value(a);
     }
@@ -41,23 +41,8 @@ module M {
 ```
 当value函数返回结构体数值后，传递的t值将会被销毁，只是返回内部的值
 
-## move
-当参数被传递到另一个函数时，内部参数会隐式使用move关键字
-```text
-script {
-    use {{sender}}::M;
-
-    fun main() {
-        let a : Module::T = Module::create(10);
-
-        M::value(move a); // variable a is moved
-
-        // local a is dropped
-    }
-}
-```
 ## copy
-参数只拥有一个作用域，在参数传递后通过```copy```关键字拷贝变量，本地保留该变量的值，同时将拷贝的副本传递给函数。但是使用copy拷贝变量的操作会增加占用内存的大小，同时在区块链中交易执行时占用的内存资源和gas花销成正比，因此无限制的copy会大幅增加交易手续费。
+参数只拥有一个作用域，在参数传递时通过```copy```关键字拷贝变量，本地保留该变量的值，同时将拷贝的副本传递给函数。但是使用copy拷贝变量的操作会增加占用内存的大小，同时在区块链中交易执行时占用的内存资源和gas花销成正比，因此无限制的copy会大幅增加交易手续费。
 ```text
 script {
     use {{sender}}::M;
@@ -73,21 +58,8 @@ script {
 }
 ```
 ## & &mut
-数据在内存中存储，通过执行该存储位置的链接就可以访问特定的数据变量，从而实现将数据传递但是不移动变量值（直接通过内存位置读取数据，降低数据的访问时间。通过内存地址实现数据的 传递，降低数据拷贝带来的本地内存资源的消耗）。其中 ```&```关键字表示只读的传递内存地址，```&mut```表示读写的传递内存地址，允许后续函数修改内存地址的变量值。
+数据在内存中存储，通过传递内存地址的指针变量就可以访问特定的数据变量，从而实现将数据传递但是不移动变量值（直接通过内存位置读取数据，降低数据的访问时间。通过内存地址实现数据的传递，降低数据拷贝带来的本地内存资源消耗）。其中 ```&```关键字表示只读的传递内存地址，```&mut```表示读写的传递内存地址，允许后续函数修改内存地址的变量值。
 
-不可变的函数定义模块：
-```text
-module M {
-    struct T { value: u8 }
-    // ...
-    // ...
-    // instead of passing a value, we'll pass a reference
-    public fun value(t: &T): u8 { //传递指针地址
-        t.value
-    }
-}
-```
-带有可变函数的定义模块：
 ```text
 module M {
     struct T { value: u8 }
@@ -97,18 +69,18 @@ module M {
         T { value }
     }
 
-    // immutable references allow reading
+    // 传递只读的指针地址，只能读取数据
     public fun value(t: &T): u8 {
         t.value
     }
 
-    // mutable references allow reading and changing the value
+    // 传递可变地址标识符，通过指针地址修改变量的值
     public fun change(t: &mut T, value: u8) {
         t.value = value;
     }
 }
 ```
-脚本函数：
+## 脚本函数示例
 1. 首先创建内部变量为10的结构体
 2. 传递读写数据指针地址，修改内部值为20
 3. 定义新的读写指针地址并进行传递，修改内部值为100
@@ -120,15 +92,15 @@ script {
     fun main() {
         let t = M::create(10);
 
-        // create a reference directly
+        // 传递可变指针，并修改内部值为20
         M::change(&mut t, 20);
 
         // or write reference to a variable
         let mut_ref_t = &mut t;
-
+        //修改值为100
         M::change(mut_ref_t, 100);
 
-        // same with immutable ref
+        // 传递只读指针
         let value = M::value(&t);
 
         // this method also takes only references
@@ -137,7 +109,7 @@ script {
     }
 }
 ```
-
+## 引用矛盾
 在只读和读写指针地址传递的过程中，需要注意定义顺序，当一个值被引用时，就无法在move该变量（值传递或引用地址传递），因为存在其他值的依赖关系
 
 例如：
