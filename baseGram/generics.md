@@ -7,10 +7,8 @@ module Storage {
     }
 }
 ```
-结构体的权限和泛型权限应保持一致
+结构体的权限和泛型内部参数的权限应保持一致，参数的ability通过```+```定义：
 ```text
-// we add parent's constraints
-// now inner type MUST be copyable and droppable
 struct Box<T: copy + drop> has copy, drop {
     contents: T
 }
@@ -19,7 +17,10 @@ struct Box<T: copy + drop> has copy, drop {
 ## 泛型示例
 ```text
 module Storage {
-    // ...
+    struct Box<T> {
+        value: T
+    }
+
     public fun create_box<T>(value: T): Box<T> {
         Box<T> { value }
     }
@@ -44,21 +45,15 @@ script {
 
         // we can do the same with integer
         let u64_box = Storage::create_box<u64>(1000000);
-        let _ = Storage::value(&u64_box);
 
-        // let's do the same with another box!
         let u64_box_in_box = Storage::create_box<Storage::Box<u64>>(u64_box);
 
-        // accessing value of this box in box will be tricky :
-        // Box<u64> is a type and Box<Box<u64>> is also a type
         let value: u64 = Storage::value<u64>(
             &Storage::value<Storage::Box<u64>>( // Box<u64> type
                 &u64_box_in_box // Box<Box<u64>> type
             )
         );
 
-        // you've already seed Debug::print<T> method
-        // which also uses generics to print any type
         Debug::print<u64>(&value);
     }
 }

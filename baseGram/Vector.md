@@ -105,7 +105,7 @@ script {
 }
 ```
 ## Vector内置函数的速查表
-1. 结合泛型创建灵活的空向量
+1. 创建一个类型为E的空向量
 ```text
 Vector::empty<E>(): vector<E>;
 ```
@@ -113,11 +113,11 @@ Vector::empty<E>(): vector<E>;
 ```text
 Vector::length<E>(v: &vector<E>): u64;
 ```
-3. push，添加至元素末尾
+3. push，元素e添加至元素末尾
 ```text
 Vector::push_back<E>(v: &mut vector<E>, e: E);
 ```
-4. pop 从元素末尾取出数据
+4. pop 从元素末尾取出数据E
 ```text
 Vector::pop_back<E>(v: &mut vector<E>): E;
 ```
@@ -125,4 +125,3 @@ Vector::pop_back<E>(v: &mut vector<E>): E;
 ```text
 Vector::borrow_mut<E>(v: &mut vector<E>, i: u64): &E;
 ```
-
