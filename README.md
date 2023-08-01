@@ -2,6 +2,7 @@
 1. https://move-book.com/cn/index.html
 2. https://aptos.dev/tutorials/your-first-transaction
 3. https://developers.diem.com/docs/welcome-to-diem/
+4. https://diem.github.io/move/modules-and-scripts.html
 
 Move程序分为脚本和模块:
 

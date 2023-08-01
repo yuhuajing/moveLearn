@@ -220,13 +220,29 @@ script {
 }
 ```
 ## Module
-模块类似合约中的```library```和其他语言的库, 以```module```关键字开头，后面跟随模块名称和大括号，大括号内部定义该模块封装的一组函数和结构体。默认情况下，模块将在发布者的地址下进行编译和发布，需要执行特定的address地址：
+模块类似合约中的```library```和其他语言的库, 以```module```关键字开头，后面跟随模块名称和大括号，大括号内部定义该模块封装的一组函数和结构体。默认情况下，模块将在发布者的地址下进行编译和发布，需要执行特定的address地址. `<address->`表示有效的地址0x42或文字地址/TestAddr
 ```text
-address 0x1{
-    module HelloWorld{
-        public fun gimme_five():u8{
-            5
-        }
+module <address>/TestAddr::<identifier> {
+    (<use> | <friend> | <type> | <function> | <constant>)*
+}
+// 表示该模块将在账户地址0x42下发布在全局变量的存储空间中
+```
+1. use 导入其他模块
+2. friend 标准信赖的其他模块
+3. constant 常量，定义仅仅能在当前模块中使用的private类型的变量
+```text
+module 0x42/TestAddr::Test {
+    struct Example has copy, drop { i: u64 }
+
+    use Std::Debug;
+    friend 0x42::AnotherTest;
+
+    const ONE: u64 = 1;
+
+    public fun print(x: u64) {
+        let sum = x + ONE;
+        let example = Example { i: sum };
+        Debug::print(&sum)
     }
 }
 ```
