@@ -258,6 +258,10 @@ module Math {
 }
 ```
 
+导入模块的某个特定成员（内部定义的函数或结构体）```use 0x1::Signer::address_of;```。
+
+通过```self```导入模块本身以及模块成员```use std::option::{Self, Option};```。
+
 ## Function修饰符
 
 函数修饰符：public/private/native
