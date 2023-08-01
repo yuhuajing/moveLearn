@@ -1,6 +1,6 @@
-# 参数权限
+# Abilities限制符
 
-每种类型的数据拥有四种修饰符"copy drop store key"
+Move中每种类型的数据都可以定义拥有四种修饰符"copy drop store key"
 
 四种权限的功能限制为：
 1. Copy - 被修饰的值可以被复制。
@@ -13,8 +13,7 @@
 ```text
 module Library {
     
-    // each ability has matching keyword
-    // multiple abilities are listed with comma
+    // 定义结构体的限制符，在脚本中使用该结构体的权限
     struct Book has store, copy, drop {
         year: u64
     }
@@ -63,7 +62,7 @@ error:
 ```
 方法 ```Country::new_country()``` 创建了一个值，这个值没有被传递到任何其它地方，所以它应该在函数结束时被丢弃。但是 Country 类型没有 Drop ability，所以运行时报错了.
 
-按照 abilities 语法我们为这个结构体增加 drop ability，这个结构体的所有实例将可以被丢弃.
+按照 abilities 语法为这个结构体增加 drop ability，这个结构体的所有实例将可以被丢弃.
 ```text
 module Country {
     struct Country has drop { // has <ability>
@@ -105,4 +104,3 @@ module Country {
     // ...
 }
 ```
-
