@@ -10,14 +10,19 @@
 module Collection {
 
     use 0x1::Vector;
+
 //内部定义具体的合约变量值
+
     struct Item has store {}
+
 //resource资源，默认和模块同名
-    struct Collection has key {
+
+    struct Collection has key,store {
         items: vector<Item>
     }
+
 //Resource 将永久保存在发送者的地址下，没有人可以从所有者那里修改或取走此Resource
-    /// note that &signer type is passed here!
+
     public fun start_collection(account: &signer) {
         move_to<Collection>(account, Collection {
             items: Vector::empty<Collection>()
@@ -38,18 +43,6 @@ move内置```native fun borrow_global<T: key>(addr: address): &T;```和```native
 ```text
 // modules/Collection.move
 module Collection {
-
-    // added a dependency here!
-    use 0x1::Signer;
-    use 0x1::Vector;
-
-    struct Item has store, drop {}
-    struct Collection has key, store {
-        items: vector<Item>
-    }
-
-    // ... skipped ...
-
     /// get collection size
     /// mind keyword acquires!
     public fun size(account: &signer): u64 acquires Collection {
