@@ -20,7 +20,7 @@ Move由脚本和模块组成：
 5. move作用域是由```{ }```括起来的代码块，```let```关键字在当前作用域内创建新变量(初始化变量)。变量仅存在其作用域中，当作用域结束时变量随之消亡。变量只能存在于一个作用域中，因此在变量转移拷贝时需要注意是否需要在本地保留变量副本。
 
 ## 整型变量
-整型变量(u8 u64 u128)运算符：```+ - * / % << >> & \ ^```
+整型变量(u8 u64 u128)运算符：```+ - * / % < > <= >= == != << >> & \ ^```
 ```text
 script {
     fun main() {
@@ -42,6 +42,11 @@ script {
 
         // or like this, with type
         if (a < 10u8) {}; // usually you don't need to specify type
+        
+        // literals can be written in hex
+        let hex_u8: u8 = 0x1;
+        let hex_u64: u64 = 0xCAFE;
+        let hex_u128: u128 = 0xDEADBEEF;
     }
 }
 ```
@@ -60,8 +65,10 @@ script {
 }
 ```
 ## bool
-布尔类型的变量初始化和整型类似，默认值为false
-
+布尔类型的变量初始化和整型类似，默认值为false，支持```&& || !``` 逻辑与、或、非
+1. if (bool) { ... }
+2. while (bool) { .. }
+3. assert!(bool, u64)
 ```text
 script {
     fun main() {
@@ -73,26 +80,47 @@ script {
     }
 }
 ```
+a0e7500b1b8420f6e6d187d3f2f10b886ebc9d583f40754b4576ca9d3844b845
 ## Address
-Address地址是区块链中交易发送者的标识符，转账和导入模块等这些操作都需要指定地址
+Address地址是区块链中交易发送者的标识符，用于表示全局存储中的位置。账户值是128位（16字节）标识符，在给定的地址中，用于存储 ```module```函数 和 ```resource```结构体，通过指定address的值来访问该地址下的模块和资源。
+
+地址在表达式中使用时，地址需要以```@```作为前缀，在表达式之外使用则不用带前导。
+1. 命名地址：通过字符串命名
+2. 数字地址：有效的u128数字值。
 
 ```text
 script {
     fun main() {
-        let addr: address; // type identifier
+        let a1: address = @0x1; // shorthand for 0x00000000000000000000000000000001
+        let a2: address = @0x42; // shorthand for 0x00000000000000000000000000000042
+        let a3: address = @0xDEADBEEF; // shorthand for 0x000000000000000000000000DEADBEEF
+        let a4: address = @0x0000000000000000000000000000000A;
+        let a5: address = @Std; // Assigns `a5` the value of the named address `Std`
+        let a6: address = @66;
+        let a7: address = @0x42;
 
-        // in this book I'll use {{sender}} notation;
-        // always replace `{{sender}}` in examples with VM specific address!!!
-        addr = {{sender}};
-
-        // in Diem's Move VM and Starcoin - 16-byte address in HEX
-        addr = 0x...;
-
-        // in dfinance's DVM - bech32 encoded address with `wallet1` prefix
-        addr = wallet1....;
+        module 66::SomeModule {   // Not in expression context, so no @ needed
+            use 0x1::OtherModule; // Not in expression context so no @ needed
+            use Std::Vector;      // Can use a named address as a namespace item when using other modules
+            ...
+        }
     }
 }
 ```
+## signers
+signer是内置的Move资源，允许持有者代表特定账户地址发起交易的能力。例如
+```text
+script {
+    use Std::Signer;
+    fun main(s1: signer, s2: signer) { //交易脚本可以有任意数量的signers
+        let a1 = @0x1;
+        let a2 = @0x2;
+        // 如果脚本是从 0x42 以外的任何地址发送的话，都会造成代码中止
+        assert!(Signer::address_of(&s1) == @0x42, 0);
+    }
+}
+```
+
 ## 代码块作用域
 1. 每个拥有返回值的表达式或代码块都必须以```;```结尾，代码块内的返回值可以不加```;```
 2. let定义的变量的生命周期和作用域相同
@@ -280,9 +308,9 @@ module Math {
 
 ## Function修饰符
 
-函数修饰符：public/private/native
+函数修饰符：public/private/native/public(friend)/public(script)
 
-通过函数修饰符定义函数的可见性，默认在模块中定义的函数都是private，无法再其他模块或脚本中访问。私有函数只能在当前定义的模块中使用。通过```public```关键字修改函数的可见性。表明该函数外部可调用。
+1. 通过函数修饰符定义函数的可见性，默认在模块中定义的函数都是private，无法再其他模块或脚本中访问。私有函数只能在当前定义的模块中使用。通过```public```关键字修改函数的可见性。表明该函数外部可调用。
 ```text
 module Math {
 
@@ -296,12 +324,74 @@ module Math {
 }
 ```
 
-```native```函数修饰符表明函数时内置函数，这种方法由VM本身定义，在不同的VM中存在不同的实现。这意味着native函数没有使用MOVE语法，没有函数体。
+2. ```native```函数修饰符表明函数时内置函数，这种方法由VM本身定义，在不同的VM中存在不同的实现。这意味着native函数没有使用MOVE语法，没有函数体。
 ```text
 module Signer {
 
     native public fun borrow_address(s: &signer): &address;
 
     // ... some other functions ...
+}
+```
+3. public(friend)
+限制模块中的函数只能在申明了friend的模块中调用使用，但是无法将script声明为friend，因此脚本中无法调用这个函数
+```text
+address 0x42 {
+module M {
+    friend 0x42::N;  // friend declaration
+    public(friend) fun foo(): u64 { 0 }
+    fun calls_foo(): u64 { foo() } // valid
+}
+
+module N {
+    fun calls_M_foo(): u64 {
+        0x42::M::foo() // valid
+    }
+}
+
+module other {
+    fun calls_M_foo(): u64 {
+        0x42::M::foo() // ERROR!
+//      ^^^^^^^^^^^^ 'foo' can only be called from a 'friend' of module '0x42::M'
+    }
+}
+}
+
+script {
+    fun calls_M_foo(): u64 {
+        0x42::M::foo() // ERROR!
+//      ^^^^^^^^^^^^ 'foo' can only be called from a 'friend' of module '0x42::M'
+    }
+}
+```
+
+4. public(script)
+限制模块的函数只能在脚本或者同样声明了 public(script)的模块函数中调用使用。
+```text
+address 0x42 {
+module M {
+    public(script) fun foo(): u64 { 0 }
+    fun calls_foo(): u64 { foo() } // ERROR!
+//                         ^^^ 'foo' can only be called from a script context
+}
+
+module N {
+    fun calls_M_foo(): u64 {
+        0x42::M::foo() // ERROR!
+//      ^^^^^^^^^^^^ 'foo' can only be called from a script context
+    }
+}
+
+module other {
+    public(script) fun calls_M_foo(): u64 {
+        0x42::M::foo() // valid
+    }
+}
+}
+
+script {
+    fun calls_M_foo(): u64 {
+        0x42::M::foo() // valid
+    }
 }
 ```

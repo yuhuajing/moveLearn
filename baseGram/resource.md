@@ -39,5 +39,30 @@ script {
 ## acquire
 acquires关键字```fun <name>(<args...>): <ret_type> acquires T, T1 ... {}```，用于标记在函数调用期间，该函数将获取对某些资源（Resource）的所有权。资源是Move语言中的一种特殊类型，代表一些数据结构或资产，其所有权具有严格的借用规则。使用acquires关键字可以明确地指示一个函数在执行期间会获取特定资源的所有权,确保了资源在合约执行期间的正确管理，避免了资源泄漏和数据竞争等问题.
 
+当函数使用```move_from```、```borrow_global```或访问资源时```borrow_global_mut```，该函数必须指示它```acquires```的资源
+
 1. 表明资源所有权转移： 当一个函数在其参数列表中使用acquires关键字来标记某个资源，它表明在函数调用期间，该函数将获取对该资源的所有权。这意味着在函数执行期间，调用者不再拥有该资源，并且只有函数内部可以使用该资源。
 2. 编译时借用检查： 使用acquires关键字有助于进行资源借用检查。Move语言的设计目标之一是确保资源的安全性和正确性。通过在函数签名中指定acquires，编译器可以对资源所有权进行静态检查，确保函数在使用资源时符合资源借用规则，防止资源的多重所有权或悬空指针等错误。
+```text
+address 0x42 {
+module Example {
+    use Std::Vector;
+
+    struct Balance has key { value: u64 }
+    struct Box<T> has key { items: vector<T> }
+
+    public fun store_two<Item1: store, Item2: store>(
+        addr: address,
+        item1: Item1,
+        item2: Item2,
+    ) acquires Balance, Box {
+        let balance = borrow_global_mut<Balance>(addr); // acquires needed
+        balance.value = balance.value - 2;
+        let box1 = borrow_global_mut<Box<Item1>>(addr); // acquires needed
+        Vector::push_back(&mut box1.items, item1);
+        let box2 = borrow_global_mut<Box<Item2>>(addr); // acquires needed
+        Vector::push_back(&mut box2.items, item2);
+    }
+}
+}
+```
