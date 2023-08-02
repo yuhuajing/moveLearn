@@ -31,30 +31,104 @@ authors* = [<string>]            # e.g., ["Joe Smith (joesmith@noemail.com)", "J
 <string> = { local = <string>, addr_subst* = { (<string> = (<string> | <address>))+ } }
 ```
 选用remote的git依赖的方式会造成编译速度慢，可以先下载本地
-> https://github.com/diem/diem.git
-
-> https://github.com/aptos-labs/aptos-core.git
+> https://github.com/move-language/move/tree/main/language
 ```text
 [dependencies]
 AptosStdlib = { local = "../aptos-stdlib" }
 MoveStdlib = { local = "../move-stdlib" }
 ```
 2. sources 目录用于创建module和scripts文件
-执行脚本文件 的命令： 
-> move sandbox run sources/xxx_script.move --signers `<Addr>`
 
 编译并检查模块:
 > move build
 
+```text
+address 0x2 {
+    module Coin{
+        struct Coin has copy,drop{
+            value:u64
+        }
+        public fun mint(value:u64):Coin{
+            Coin{value}
+        }
+        public fun value(coin:&Coin):u64{
+            *&coin.value
+        }
+        public fun burn(coin:&Coin){
+            let Coin{value:_}=coin;
+        }
+    }
+}
+```
+
+发布之前查询编译的字节码
+> move disassemble --name `<Addr>`
+```text
+// Move bytecode v6
+module 2.Coin {
+struct Coin has copy, drop {
+        value: u64
+}
+
+public burn(coin: &Coin) {
+B0:
+        0: MoveLoc[0](coin: &Coin)
+        1: ImmBorrowField[0](Coin.value: u64)
+        2: Pop
+        3: Ret
+}
+public mint(value: u64): Coin {
+B0:
+        0: MoveLoc[0](value: u64)
+        1: Pack[0](Coin)
+        2: Ret
+}
+public value(coin: &Coin): u64 {
+B0:
+        0: MoveLoc[0](coin: &Coin)
+        1: ImmBorrowField[0](Coin.value: u64)
+        2: ReadRef
+        3: Ret
+}
+}
+```
+
 编译并发布模块
 > move sandbox publish -v
+```text
+Found 1 modules
+Publishing a new module 00000000000000000000000000000002::Coin (wrote 167 bytes)
+Wrote 167 bytes of module ID's and code
+```
 
 查询发布的模块：
 > ls storage/`<Addr>`/modules
 
 > move sandbox view storage/`<Addr>`/modules/`<moduleName>`.mv
 
-发布之前查询编译的字节码
-> move disassemble --name `<Addr>` --interactive
+
+执行脚本文件 的命令： 
+> move sandbox run sources/xxx_script.move
+
+```text
+script {
+    use std::debug;
+    use 0x2::Coin;
+
+    fun main() {
+        let coin = Coin::mint(100);
+
+        debug::print(&Coin::value(&coin));
+
+        Coin::burn(&coin);
+    }
+}
+```
+```text
+[debug] 100
+```
+
+清理沙盒环境数据
+> move sandbox clean
 
 
