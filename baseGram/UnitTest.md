@@ -66,7 +66,7 @@ module 0x1::MyModule {
 
     #[test]
     // Or #[expected_failure] if we don't care about the abort code
-    #[expected_failure(abort_code = 0)]
+    #[expected_failure]
     fun make_sure_zero_coin_fails() {
         let coin = MyCoin { value: 0 };
         let MyCoin { value: _ } = make_sure_non_zero_coin(coin);
@@ -88,23 +88,25 @@ module 0x1::MyModule {
 }
 ```
 测试命令
-> move package test
-
-* `-f <str>或者--filter <str>` 用于测试包含特定字符串的测试
+> move test
 ```text
-$ move package test -f zero_coin
-CACHED MoveStdlib
-BUILDING TestExample
+root@DESKTOP-UUE34HN:/data/mymove# move test
+INCLUDING DEPENDENCY MoveNursery
+INCLUDING DEPENDENCY MoveStdlib
+BUILDING mymove
 Running Move unit tests
 [ PASS    ] 0x1::MyModule::make_sure_non_zero_coin_passes
 [ PASS    ] 0x1::MyModule::make_sure_zero_coin_fails
-Test result: OK. Total tests: 2; passed: 2; failed: 0
+[ PASS    ] 0x1::MyModule::test_has_coin
+Test result: OK. Total tests: 3; passed: 3; failed: 0
 ```
+
 * `-s或者--statistics` 展示测试的统计信息，报告每个测试的运行时和执行的指令。
 ```text
-$ move package test -s
-CACHED MoveStdlib
-BUILDING TestExample
+root@DESKTOP-UUE34HN:/data/mymove# move test -s
+INCLUDING DEPENDENCY MoveNursery
+INCLUDING DEPENDENCY MoveStdlib
+BUILDING mymove
 Running Move unit tests
 [ PASS    ] 0x1::MyModule::make_sure_non_zero_coin_passes
 [ PASS    ] 0x1::MyModule::make_sure_zero_coin_fails
@@ -113,13 +115,13 @@ Running Move unit tests
 Test Statistics:
 
 ┌───────────────────────────────────────────────┬────────────┬───────────────────────────┐
-│                   Test Name                   │    Time    │   Instructions Executed   │
+│                   Test Name                   │    Time    │         Gas Used          │
 ├───────────────────────────────────────────────┼────────────┼───────────────────────────┤
-│ 0x1::MyModule::make_sure_non_zero_coin_passes │   0.009    │             1             │
+│ 0x1::MyModule::make_sure_non_zero_coin_passes │   0.000    │             4             │
 ├───────────────────────────────────────────────┼────────────┼───────────────────────────┤
-│ 0x1::MyModule::make_sure_zero_coin_fails      │   0.008    │             1             │
+│ 0x1::MyModule::make_sure_zero_coin_fails      │   0.000    │             3             │
 ├───────────────────────────────────────────────┼────────────┼───────────────────────────┤
-│ 0x1::MyModule::test_has_coin                  │   0.008    │             1             │
+│ 0x1::MyModule::test_has_coin                  │   0.000    │            21             │
 └───────────────────────────────────────────────┴────────────┴───────────────────────────┘
 
 Test result: OK. Total tests: 3; passed: 3; failed: 0
@@ -139,9 +141,10 @@ module 0x1::MyModule {
 ```
 输出
 ```text
-$ move package test -g
-CACHED MoveStdlib
-BUILDING TestExample
+root@DESKTOP-UUE34HN:/data/mymove# move test -g
+INCLUDING DEPENDENCY MoveNursery
+INCLUDING DEPENDENCY MoveStdlib
+BUILDING mymove
 Running Move unit tests
 [ PASS    ] 0x1::MyModule::make_sure_non_zero_coin_passes
 [ PASS    ] 0x1::MyModule::make_sure_zero_coin_fails
@@ -154,13 +157,13 @@ Failures in 0x1::MyModule:
 
 ┌── test_has_coin_bad ──────
 │ error[E11001]: test failure
-│    ┌─ /home/tzakian/TestExample/sources/MyModule.move:47:10
+│    ┌─ ./sources/test.move:46:9
 │    │
-│ 44 │      fun test_has_coin_bad(a: signer) {
-│    │          ----------------- In this function in 0x1::MyModule
+│ 43 │     fun test_has_coin_bad(a: signer) {
+│    │         ----------------- In this function in 0x1::MyModule
 │    ·
-│ 47 │          assert!(has_coin(@0x2), 1);
-│    │          ^^^^^^^^^^^^^^^^^^^^^^^^^^ Test was not expected to abort but it aborted with 1 here
+│ 46 │         assert!(has_coin(@0x2), 1);
+│    │         ^^^^^^^^^^^^^^^^^^^^^^^^^^ Test was not expected to error, but it aborted with code 1 originating in the module 00000000000000000000000000000001::MyModule rooted here
 │
 │
 │ ────── Storage state at point of failure ──────
