@@ -62,7 +62,7 @@ address 0x2 {
 ```
 
 发布之前查询编译的字节码
-> move disassemble --name `<Addr>`
+> move disassemble --name `<ModuleName>`
 ```text
 // Move bytecode v6
 module 2.Coin {
