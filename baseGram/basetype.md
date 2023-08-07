@@ -308,7 +308,7 @@ module Math {
 
 ## Function修饰符
 
-函数修饰符：public/private/native/public(friend)/public(script)
+函数修饰符：public/private/native/public(friend)/public(script)/inline
 
 1. 通过函数修饰符定义函数的可见性，默认在模块中定义的函数都是private，无法再其他模块或脚本中访问。私有函数只能在当前定义的模块中使用。通过```public```关键字修改函数的可见性。表明该函数外部可调用。
 ```text
@@ -395,3 +395,42 @@ script {
     }
 }
 ```
+5. inline 
+#[inline] 注解在 Move 语言中的作用是指示编译器将指定函数内联。
+
+内联函数的特点是:
+
+在调用处直接插入函数体代码,而不是调用函数
+这会节省函数调用方的栈开销和函数跳转开销
+从而可能提高性能
+```text
+#[inline]
+ fun add (a: u64, b: u64): u64 {
+    a + b
+}
+    <!-- inline fun authorized_borrow_refs(
+        owner: &signer,
+        asset: Object<Metadata>,
+    ): &ManagedFungibleAsset acquires ManagedFungibleAsset {
+        assert!(object::is_owner(asset, signer::address_of(owner)), error::permission_denied(ENOT_OWNER));
+        borrow_global<ManagedFungibleAsset>(object::object_address(&asset))
+    } -->
+```
+
+这里使用 #[inline] 注解后,编译器会将 add 函数的函数体直接插入调用处,而不是真正调用该函数。
+
+这相当于:
+```text
+let result = a + b;  
+// 而不是
+let result = add(a, b);
+```
+样可以避免函数调用开销,可能提高性能。
+
+但是内联函数也有一些 disadvantages:
+
+会让代码变大,因为函数体被复制到多处
+编译和链接时间可能会增长
+所以,[#inline] 注解只应用于那些小而频繁调用的函数上,以提高性能。
+
+对于大函数,应避免使用 #[inline],因为上述 disadvantages 可能超过性能提升的好处。
