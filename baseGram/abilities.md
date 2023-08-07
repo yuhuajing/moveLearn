@@ -104,3 +104,31 @@ module Country {
     // ...
 }
 ```
+
+#[]属性
+1. #[test] 表示测试
+2. #[cfg]用于条件编译
+```text
+#[cfg(target_os = "linux")]
+fn linux_function() {
+    // 仅在 Linux 系统下编译
+}
+
+#[cfg(target_os = "windows")]
+fn windows_function() {
+    // 仅在 Windows 系统下编译
+}
+```
+3. #[allow] #[deny] 用于设置编译器的警报或错误检查级别
+```text
+#[allow(unused_variables)]
+fn foo() {
+    let unused_var = 42; // 不会产生未使用变量的警告
+}
+
+#[deny(unused_assignments)]
+fn bar() {
+    let mut x = 1;
+    x = 2; // 会产生未使用赋值的错误
+}
+```
