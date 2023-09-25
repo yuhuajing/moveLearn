@@ -1,0 +1,9 @@
+[package]
+name = "Examples"
+version = "0.0.0"
+
+[addresses]
+defi = "0x91a7e539806ff68caf1bcba305c8f694182898949c581586b4c9676e6bf35392"
+
+[dependencies]
+AptosFramework = { local = "../../framework/aptos-framework" }

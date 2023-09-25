@@ -1,0 +1,11 @@
+[package]
+name = "PostMint"
+version = "0.0.0"
+
+[dependencies]
+AptosFramework = { local = "../../framework/aptos-framework" }
+AptosToken = { local = "../../framework/aptos-token" }
+
+[addresses]
+aptos_framework = "0x1"
+post_mint_reveal_nft = "0xe08fff6a32c5d85e921c898f4660380b2a808e22769813245c577cd14427bfe8"

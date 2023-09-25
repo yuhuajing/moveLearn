@@ -1,0 +1,11 @@
+[package]
+name = "Examples"
+version = "0.0.0"
+
+[addresses]
+MoonCoin = "_"
+
+[dependencies]
+AptosFramework = { local = "../../framework/aptos-framework" }
+
+tackle bench tornado system uncover submit family country ankle city tissue gather
